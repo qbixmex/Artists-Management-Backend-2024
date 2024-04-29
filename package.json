@@ -1,0 +1,20 @@
+{
+  "name": "artists-management-backend",
+  "version": "0.0.1",
+  "description": "This app is an artists management application backend with Node / ExpressJS, Typescript, MongoDB.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node ./src/main.js"
+  },
+  "keywords": [
+    "express",
+    "node",
+    "typescript",
+    "mongodb"
+  ],
+  "author": "Daniel González Briseño",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
