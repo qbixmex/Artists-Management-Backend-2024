@@ -1,1 +1,1 @@
-# artists-management-backend
+# Artists Management Backend
