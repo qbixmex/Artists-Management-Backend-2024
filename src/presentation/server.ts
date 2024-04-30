@@ -1,11 +1,10 @@
 import path from "path";
-import express, { Request, Response } from "express";
-import { envs } from "../config/plugins/envs.plugin";
+import express, { Request, Response, Router } from "express";
 
 type Options = {
   host: string;
   port: number;
-  // router: Router;
+  router: Router;
   public_path: string;
 };
 
@@ -14,13 +13,13 @@ class Server {
   private serverListener?: any;
   private readonly host: string;
   private readonly port: number;
-  // private readonly routes: Router;
+  private readonly routes: Router;
   private readonly public_path: string;
 
   constructor(options: Options) {
     this.host = options.host;
     this.port = options.port;
-    // this.routes = options.router;
+    this.routes = options.router;
     this.public_path = options.public_path;
   }
 
@@ -33,14 +32,17 @@ class Server {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
 
-    //* Single Page Application (SPA) like React, Vue, Angular, Solid, Qwik, etc.
-    this.app.use(express.static('public'));
+    //* Routes
+    this.app.use(this.routes);
 
-    this.app.get('*', (_request: Request, response: Response) => {
-      const indexPath = path.join(__dirname, `./${this.public_path}/index.html`);
-      console.log(indexPath)
-      response.sendFile(indexPath);
-    });
+    //* Single Page Application (SPA) like React, Vue, Angular, Solid, Qwik, etc.
+    // this.app.use(express.static('public'));
+
+    // this.app.get('*', (_request: Request, response: Response) => {
+    //   const indexPath = path.join(__dirname, `./${this.public_path}/index.html`);
+    //   console.log(indexPath)
+    //   response.sendFile(indexPath);  
+    // });
 
   }
 

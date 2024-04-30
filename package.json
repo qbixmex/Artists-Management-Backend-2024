@@ -1,6 +1,6 @@
 {
   "name": "artists-management-backend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "This app is an artists management application backend with Node / ExpressJS, Typescript, MongoDB.",
   "main": "app.js",
   "scripts": {
