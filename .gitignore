@@ -1,1 +1,22 @@
+# Dependency directories
 node_modules/
+
+# Build files
+dist/
+
+# OS generated files
+.DS_Store
+
+# Logs
+logs/
+
+# Database Volumes
+/mongo/
+/mongo_test/
+/postgres/
+/postgres_test/
+/coverage/
+
+# Local env files
+.env
+.env.test
