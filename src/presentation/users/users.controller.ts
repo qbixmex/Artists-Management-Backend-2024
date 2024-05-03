@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { Request, Response } from 'express';
 import { UserRepository } from '../../domain/repositories';
 import {
@@ -7,9 +8,9 @@ import {
   UpdateUserUseCase,
   DeleteUserUseCase,
 } from '../../domain/use-cases';
-import CreateUserDTO from '../../domain/dtos/user/create-user.dto';
-import { UpdateUserDTO } from '../../domain/dtos';
+import { CreateUserDTO, UpdateUserDTO } from '../../domain/dtos';
 import { Role } from '../../domain/entities';
+import { CustomError } from "../../domain/errors";
 
 class UserController {
 
@@ -33,7 +34,7 @@ class UserController {
       .catch(error => response.status(error.statusCode).json({ error: error.message }));
   }
 
-  public create = (
+  public create = async (
     request: Request<{}, {}, {
       firstName: string;
       lastName: string;
@@ -45,19 +46,41 @@ class UserController {
     response: Response
   ) => {
 
-    const [ error, createUserDTO ] = CreateUserDTO.create({ ...request.body });
+    const [ error, createUserDTO ] = CreateUserDTO.create({
+      uuid: crypto.randomUUID(),
+      ...request.body,
+    });
 
     if (error) {
       return response.status(400).json({ error });
     }
 
-    new CreateUserUseCase(this.usersRepository)
-      .execute(createUserDTO!)
-      .then(user => response.status(201).json(user))
-      .catch(error => response.status(error.statusCode).json({ error: error.message }));
+    try {
+
+      const user = await new CreateUserUseCase(this.usersRepository)
+        .execute(createUserDTO!);
+
+      return response.status(201).json({
+        message: "User created successfully 👍",
+        user
+      });
+
+    } catch (error) {
+
+      if (error instanceof CustomError) {
+        return response.status(error.statusCode).json({ error: error.message })
+      }
+
+      console.log(error);
+
+      return response.status(500).json({
+        error: "Unexpected error found, check logs for details !"
+      });
+
+    }
   }
 
-  public update = (
+  public update = async (
     request: Request<{ id: string }, {}, {
       firstName?: string;
       lastName?: string;
@@ -76,20 +99,52 @@ class UserController {
       return response.status(400).json({ error });
     }
 
-    new UpdateUserUseCase(this.usersRepository)
-      .execute(updateTodoDTO!)
-      .then(user => response.status(200).json(user))
-      .catch(error => response.status(error.statusCode).json({ error: error.message }));
+    try {
+
+      const user = await new UpdateUserUseCase(this.usersRepository)
+        .execute(updateTodoDTO!);
+
+      return response.status(200).json(user)
+
+    } catch (error) {
+
+      if (error instanceof CustomError) {
+        return response.status(error.statusCode).json({ error: error.message })
+      }
+
+      console.log(error);
+
+      return response.status(500).json({
+        error: "Unexpected error found, check logs for details !"
+      });
+
+    }
   }
 
-  public delete = (request: Request, response: Response) => {
-    new DeleteUserUseCase(this.usersRepository)
-      .execute(request.params.id)
-      .then(user => response.status(200).json({
+  public delete = async (request: Request, response: Response) => {
+    try {
+
+      const user = await new DeleteUserUseCase(this.usersRepository)
+        .execute(request.params.id);
+
+      return response.status(200).json({
         message: "User deleted successfully 👍",
         user
-      }))
-      .catch(error => response.status(error.statusCode).json({ error: error.message }));
+      });
+
+    } catch (error) {
+
+      if (error instanceof CustomError) {
+        return response.status(error.statusCode).json({ error: error.message })
+      }
+
+      console.log(error);
+
+      return response.status(500).json({
+        error: "Unexpected error found, check logs for details !"
+      });
+
+    }
   }
 }
 

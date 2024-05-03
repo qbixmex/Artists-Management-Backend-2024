@@ -1,6 +1,6 @@
 import { Router } from "express";
 import UsersController from "./users.controller";
-import { UserDataSourceImplementation } from "../../infrastructure/datasource";
+import { UserMongoImplementation } from "../../infrastructure/datasource";
 import { UserRepositoryImplementation } from "../../infrastructure/repository";
 
 class UserRoutes {
@@ -9,7 +9,7 @@ class UserRoutes {
 
     const router = Router();
 
-    const datasource = new UserDataSourceImplementation();
+    const datasource = new UserMongoImplementation();
     const repository = new UserRepositoryImplementation(datasource);
     const usersController = new UsersController(repository);
 

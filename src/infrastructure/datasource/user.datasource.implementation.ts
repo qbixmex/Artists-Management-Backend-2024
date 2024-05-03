@@ -1,36 +1,11 @@
 import { UserDataSource } from "../../domain/data-source";
-import { UpdateUserDTO } from "../../domain/dtos";
-import CreateUserDTO from "../../domain/dtos/user/create-user.dto";
-import { Role, UserEntity } from "../../domain/entities";
+import { CreateUserDTO, UpdateUserDTO } from "../../domain/dtos";
+import { UserEntity } from "../../domain/entities";
 import { CustomError } from "../../domain/errors";
+import { isValidUUID } from "../../helpers";
 import User from "../../presentation/users/user.model";
-import { isValidObjectId } from "mongoose";
 
-const data = [
-  {
-    id: "123abc",
-    firstName: "Michael",
-    lastName: "Smith",
-    email: "michael@gmail.com",
-    role: Role.ARTIST,
-    active: false,
-    createdAt: "2022-01-01T00:00:00.000Z",
-    updatedAt: "2022-01-01T00:00:00.000Z",
-    
-  },
-  {
-    id: "456efg",
-    firstName: "John",
-    lastName: "Mayer",
-    email: "johh@gmail.com",
-    role: Role.MANAGER,
-    active: "2022-02-02T00:00:00.000Z",
-    createdAt: "2022-02-01T00:00:00.000Z",
-    updatedAt: "2022-02-01T00:00:01.000Z",
-  },
-];
-
-class UserDataSourceImplementation implements UserDataSource {
+class UserMongoImplementation implements UserDataSource {
 
   async list(): Promise<UserEntity[]> {
 
@@ -40,21 +15,37 @@ class UserDataSourceImplementation implements UserDataSource {
       return [];
     }
 
-    return users.map((user) => UserEntity.fromObject(user));
+    return users.map((user) => UserEntity.fromObject({
+      id: user.uuid,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      active: user.active,
+      imageURL: user.imageURL,
+    }));
   }
 
   async show(id: string): Promise<UserEntity> {
-    if (!isValidObjectId(id)) {
+    if (!isValidUUID(id)) {
       throw new CustomError(`Invalid id: ${id} !`, 400);
     }
 
-    const user = await User.findById(id);
+    const user = await User.findOne({ uuid: id });
 
     if (!user) {
       throw new CustomError(`User with id: ${id}, not found !`, 404);
     }
 
-    return UserEntity.fromObject(user);
+    return UserEntity.fromObject({
+      id: user.uuid,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      active: user.active,
+      imageURL: user.imageURL,
+    });
   }
 
   async create(createUserDTO: CreateUserDTO): Promise<UserEntity> {
@@ -65,8 +56,17 @@ class UserDataSourceImplementation implements UserDataSource {
     }
 
     try {
-      const user = await User.create(createUserDTO);
-      return UserEntity.fromObject(user);
+      const newUser = await User.create(createUserDTO);
+
+      return UserEntity.fromObject({
+        id: newUser.uuid,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        role: newUser.role,
+        active: newUser.active,
+        imageURL: newUser.imageURL,
+      });
     } catch (error) {
       console.log(error);
       throw new CustomError("Unexpected error, check logs for details !", 500);
@@ -74,11 +74,11 @@ class UserDataSourceImplementation implements UserDataSource {
   }
 
   async update(updateUserDTO: UpdateUserDTO): Promise<UserEntity> {
-    if (!isValidObjectId(updateUserDTO.id)) {
+    if (!isValidUUID(updateUserDTO.id)) {
       throw new CustomError(`Invalid id: ${updateUserDTO.id} !`, 400);
     }
 
-    const foundUser = await User.findById(updateUserDTO.id);
+    const foundUser = await User.findOne({ uuid: updateUserDTO.id });
 
     if (!foundUser) {
       throw new CustomError(`User with id: ${updateUserDTO.id}, not found !`, 404);
@@ -86,21 +86,19 @@ class UserDataSourceImplementation implements UserDataSource {
 
     try {
       const updatedUser = await User.findOneAndUpdate(
-        { _id: updateUserDTO.id },
+        { uuid: updateUserDTO.id },
         { ...updateUserDTO },
         { new: true }
       );
 
       return UserEntity.fromObject({
-        id: updatedUser?._id,
-        firstName: updatedUser?.firstName,
-        lastName: updatedUser?.lastName,
-        email: updatedUser?.email,
-        role: updatedUser?.role,
-        active: updatedUser?.active,
-        imageURL: updatedUser?.imageURL,
-        createdAt: updatedUser?.createdAt,
-        updatedAt: updatedUser?.updatedAt,
+        id: updatedUser!.uuid,
+        firstName: updatedUser!.firstName,
+        lastName: updatedUser!.lastName,
+        email: updatedUser!.email,
+        role: updatedUser!.role,
+        active: updatedUser!.active,
+        imageURL: updatedUser!.imageURL
       });
 
     } catch (error) {
@@ -111,18 +109,18 @@ class UserDataSourceImplementation implements UserDataSource {
 
   async delete(id: string): Promise<UserEntity> {
 
-    if (!isValidObjectId(id)) {
+    if (!isValidUUID(id)) {
       throw new CustomError(`Invalid id: ${id} !`, 400);
     }
 
-    const userExists = await User.findById(id);
+    const userExists = await User.findOne({ uuid: id });
 
     if (!userExists) {
       throw new CustomError(`User with id: ${id}, not found !`, 400);
     }
 
     try {
-      const deletedUser = await User.findByIdAndDelete(id);
+      const deletedUser = await User.findOneAndDelete({ uuid: id });
       return UserEntity.fromObject(deletedUser!);
     } catch (error) {
       console.log(error);
@@ -132,4 +130,4 @@ class UserDataSourceImplementation implements UserDataSource {
 
 }
 
-export default UserDataSourceImplementation;
+export default UserMongoImplementation;

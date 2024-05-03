@@ -1,6 +1,7 @@
 import { Role } from "../../entities";
 
 type Props = {
+  uuid: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -12,6 +13,7 @@ type Props = {
 class CreateUserDTO {
 
   constructor(
+    public readonly uuid: string,
     public readonly firstName: string,
     public readonly lastName: string,
     public readonly email: string,
@@ -21,6 +23,13 @@ class CreateUserDTO {
   ) {}
 
   static create(props: Props): [string?, CreateUserDTO?] {
+    if (!props.uuid) {
+      return [
+        'UUID is required !',
+        undefined
+      ];
+    }
+
     if (!props.firstName) {
       return [
         'First Name is required !',
@@ -108,6 +117,7 @@ class CreateUserDTO {
     return [
       undefined,
       new CreateUserDTO(
+        props.uuid,
         props.firstName,
         props.lastName,
         props.email,

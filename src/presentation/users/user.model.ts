@@ -1,6 +1,7 @@
 import mongoose, { Model, Schema } from "mongoose";
 
 export type UserType = {
+  uuid: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -19,6 +20,11 @@ export type UserModel = Model<UserType & timestamps>;
 
 const UserSchema = new Schema<UserType, UserModel>(
   {
+    uuid: {
+      type: String,
+      required: [true, "UUID is required !"],
+      unique: true,
+    },
     firstName: {
       type: String,
       required: [true, "First Name is required !"],

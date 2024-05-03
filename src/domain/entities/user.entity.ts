@@ -18,8 +18,6 @@ class UserEntity {
     public readonly role: Role,
     public readonly active: Date | boolean,
     public readonly imageURL: string,
-    public readonly createdAt: Date,
-    public readonly updatedAt: Date,
   ) {}
 
   get isActive(): Date | boolean {
@@ -59,8 +57,6 @@ class UserEntity {
       entity.role,
       entity.active ? entity.active as Date : false,
       entity.imageURL,
-      entity.createdAt,
-      entity.updatedAt,
     );
   }
 }
