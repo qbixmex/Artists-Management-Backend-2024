@@ -5,7 +5,7 @@ import { UserRepositoryImplementation } from "../../infrastructure/repository";
 
 class UserRoutes {
 
-  static get routes(): Router {
+  static get routes(): Router { 
 
     const router = Router();
 

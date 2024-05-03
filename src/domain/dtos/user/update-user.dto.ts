@@ -1,4 +1,5 @@
 // import { validate as uuidValidate } from 'uuid';
+import { isPasswordSecure, isValidUUID } from "../../../helpers";
 import { Role } from "../../entities";
 
 class UpdateUserDTO {
@@ -7,6 +8,7 @@ class UpdateUserDTO {
     public readonly firstName?: string,
     public readonly lastName?: string,
     public readonly email?: string,
+    public readonly password?: string,
     public readonly role?: string,
     public readonly active?: boolean,
   ) {}
@@ -26,6 +28,10 @@ class UpdateUserDTO {
       outputObject.email = this.email;
     }
 
+    if (this.password) {
+      outputObject.password = this.password;
+    }
+
     if (this.role) {
       outputObject.role = this.role;
     }
@@ -38,14 +44,14 @@ class UpdateUserDTO {
   }
 
   static update(props: { [ key: string ]: any }): [string?, UpdateUserDTO?] {
-    const { id, firstName, lastName, email, role, active } = props;
+    const { id, firstName, lastName, email, password, role, active } = props;
 
-    // if (!uuidValidate(id)) {
-    //   return [
-    //     `Todo id: ${id}, is not valid uuid !`,
-    //     undefined
-    //   ];
-    // }
+    if (!isValidUUID(id)) {
+      return [
+        `Todo id: ${id}, is not valid id !`,
+        undefined
+      ];
+    }
 
     if (firstName && typeof firstName !== 'string') {
       return [
@@ -89,6 +95,27 @@ class UpdateUserDTO {
       ];
     }
 
+    if (password && typeof password !== 'string') {
+      return [
+        'Email must be a valid string !',
+        undefined
+      ];
+    }
+
+    if (password && password.length < 6) {
+      return [
+        'Password must be greater than 8 characters !',
+        undefined
+      ];
+    }
+
+    if (password && isPasswordSecure(password)) {
+      return [
+        'Password is very insecure, choose another more safety !',
+        undefined
+      ];
+    }
+
     if (role && typeof email !== 'string') {
       return [
         'Role must be a valid string !',
@@ -112,7 +139,7 @@ class UpdateUserDTO {
 
     return [
       undefined,
-      new UpdateUserDTO(id, firstName, lastName, email, role, active),
+      new UpdateUserDTO(id, firstName, lastName, email, password, role, active),
     ];
   }
 

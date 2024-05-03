@@ -1,3 +1,4 @@
+import { encryptAdapter } from "../../adapters";
 import { UserDataSource } from "../../domain/data-source";
 import { CreateUserDTO, UpdateUserDTO } from "../../domain/dtos";
 import { UserEntity } from "../../domain/entities";
@@ -55,8 +56,13 @@ class UserMongoImplementation implements UserDataSource {
       throw new CustomError(`User with email: ${createUserDTO.email}, already exists !`, 400);
     }
 
+    const hashedPassword = encryptAdapter.hash(createUserDTO.password);
+
     try {
-      const newUser = await User.create(createUserDTO);
+      const newUser = await User.create({
+        ...createUserDTO,
+        password: hashedPassword,
+      });
 
       return UserEntity.fromObject({
         id: newUser.uuid,
@@ -74,6 +80,8 @@ class UserMongoImplementation implements UserDataSource {
   }
 
   async update(updateUserDTO: UpdateUserDTO): Promise<UserEntity> {
+    let passwordsMatch = true;
+
     if (!isValidUUID(updateUserDTO.id)) {
       throw new CustomError(`Invalid id: ${updateUserDTO.id} !`, 400);
     }
@@ -84,10 +92,19 @@ class UserMongoImplementation implements UserDataSource {
       throw new CustomError(`User with id: ${updateUserDTO.id}, not found !`, 404);
     }
 
+    if (updateUserDTO.password) {
+      passwordsMatch = encryptAdapter.compare(updateUserDTO.password, foundUser.password);
+    }
+
     try {
       const updatedUser = await User.findOneAndUpdate(
         { uuid: updateUserDTO.id },
-        { ...updateUserDTO },
+        {
+          ...updateUserDTO,
+          password: passwordsMatch
+            ? undefined
+            : encryptAdapter.hash(updateUserDTO.password!)
+        },
         { new: true }
       );
 

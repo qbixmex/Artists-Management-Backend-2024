@@ -1,3 +1,4 @@
+import { isPasswordSecure } from "../../../helpers";
 import { Role } from "../../entities";
 
 type Props = {
@@ -79,9 +80,16 @@ class CreateUserDTO {
       ];
     }
 
-    if ( props.password.length < 8 ) {
+    if ( props.password.length < 6 ) {
       return [
         'Password must be greater than 8 characters !',
+        undefined
+      ];
+    }
+
+    if (props.password && isPasswordSecure(props.password)) {
+      return [
+        'Password is very insecure, choose another more safety !',
         undefined
       ];
     }
