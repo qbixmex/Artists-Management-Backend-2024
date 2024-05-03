@@ -1,10 +1,15 @@
 import { Request, Response } from 'express';
 import { UserRepository } from '../../domain/repositories';
-import { GetUsersUseCase, GetUserUseCase } from '../../domain/use-cases';
+import {
+  GetUsersUseCase,
+  GetUserUseCase,
+  CreateUserUseCase,
+  UpdateUserUseCase,
+  DeleteUserUseCase,
+} from '../../domain/use-cases';
 import CreateUserDTO from '../../domain/dtos/user/create-user.dto';
-import CreateUserUseCase from '../../domain/use-cases/users/createUserUseCase';
-import UpdateUserUseCase from '../../domain/use-cases/users/updateUserUseCase';
 import { UpdateUserDTO } from '../../domain/dtos';
+import { Role } from '../../domain/entities';
 
 class UserController {
 
@@ -17,7 +22,7 @@ class UserController {
     new GetUsersUseCase(this.usersRepository)
       .execute()
       .then(users => response.status(200).json(users))
-      .catch(error => response.status(400).json({ error }));
+      .catch(error => response.status(error.statusCode).json({ error: error.message }));
 
   }
 
@@ -25,11 +30,22 @@ class UserController {
     new GetUserUseCase(this.usersRepository)
       .execute(request.params.id)
       .then(user => response.status(200).json(user))
-      .catch(error => response.status(400).json({ error }));
+      .catch(error => response.status(error.statusCode).json({ error: error.message }));
   }
 
-  public create = (request: Request, response: Response) => {
-    const [ error, createUserDTO ] = CreateUserDTO.create(request.body);
+  public create = (
+    request: Request<{}, {}, {
+      firstName: string;
+      lastName: string;
+      email: string;
+      role: Role;
+      password: string;
+      imageURL: string;
+    }>,
+    response: Response
+  ) => {
+
+    const [ error, createUserDTO ] = CreateUserDTO.create({ ...request.body });
 
     if (error) {
       return response.status(400).json({ error });
@@ -38,7 +54,7 @@ class UserController {
     new CreateUserUseCase(this.usersRepository)
       .execute(createUserDTO!)
       .then(user => response.status(201).json(user))
-      .catch(error => response.status(400).json({ error }));
+      .catch(error => response.status(error.statusCode).json({ error: error.message }));
   }
 
   public update = (
@@ -63,17 +79,17 @@ class UserController {
     new UpdateUserUseCase(this.usersRepository)
       .execute(updateTodoDTO!)
       .then(user => response.status(200).json(user))
-      .catch(error => response.status(400).json({ error }));
+      .catch(error => response.status(error.statusCode).json({ error: error.message }));
   }
 
   public delete = (request: Request, response: Response) => {
-    new GetUserUseCase(this.usersRepository)
+    new DeleteUserUseCase(this.usersRepository)
       .execute(request.params.id)
       .then(user => response.status(200).json({
         message: "User deleted successfully 👍",
         user
       }))
-      .catch(error => response.status(400).json({ error }));
+      .catch(error => response.status(error.statusCode).json({ error: error.message }));
   }
 }
 

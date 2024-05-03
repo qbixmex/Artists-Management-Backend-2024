@@ -2,6 +2,9 @@ import { UserDataSource } from "../../domain/data-source";
 import { UpdateUserDTO } from "../../domain/dtos";
 import CreateUserDTO from "../../domain/dtos/user/create-user.dto";
 import { Role, UserEntity } from "../../domain/entities";
+import { CustomError } from "../../domain/errors";
+import User from "../../presentation/users/user.model";
+import { isValidObjectId } from "mongoose";
 
 const data = [
   {
@@ -29,57 +32,102 @@ const data = [
 
 class UserDataSourceImplementation implements UserDataSource {
 
-  list(): Promise<UserEntity[]> {
-    const users = data.map(user => UserEntity.fromObject(user));
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(users), 1000);
-    });
+  async list(): Promise<UserEntity[]> {
+
+    const users = await User.find();
+
+    if (users.length === 0) {
+      return [];
+    }
+
+    return users.map((user) => UserEntity.fromObject(user));
   }
 
-  show(id: string): Promise<UserEntity> {
-    const user = UserEntity.fromObject(data[0]);
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(user), 1000);
-    });
+  async show(id: string): Promise<UserEntity> {
+    if (!isValidObjectId(id)) {
+      throw new CustomError(`Invalid id: ${id} !`, 400);
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      throw new CustomError(`User with id: ${id}, not found !`, 404);
+    }
+
+    return UserEntity.fromObject(user);
   }
 
   async create(createUserDTO: CreateUserDTO): Promise<UserEntity> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        return resolve(UserEntity.fromObject({
-          id: "123abc",
-          ...createUserDTO,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }));
-      }, 1000);
-    });
+    const userExists = await User.findOne({ email: createUserDTO.email });
+
+    if (userExists) {
+      throw new CustomError(`User with email: ${createUserDTO.email}, already exists !`, 400);
+    }
+
+    try {
+      const user = await User.create(createUserDTO);
+      return UserEntity.fromObject(user);
+    } catch (error) {
+      console.log(error);
+      throw new CustomError("Unexpected error, check logs for details !", 500);
+    }
   }
 
-  update(updateUserDTO: UpdateUserDTO): Promise<UserEntity> {
-    const foundUser = data.find(item => item.id === updateUserDTO.id);
+  async update(updateUserDTO: UpdateUserDTO): Promise<UserEntity> {
+    if (!isValidObjectId(updateUserDTO.id)) {
+      throw new CustomError(`Invalid id: ${updateUserDTO.id} !`, 400);
+    }
 
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        return resolve(UserEntity.fromObject({
-          id: foundUser!.id,
-          firstName: updateUserDTO.firstName ?? foundUser?.firstName,
-          lastName: updateUserDTO.lastName ?? foundUser?.lastName,
-          email: updateUserDTO.email ?? foundUser?.email,
-          active: updateUserDTO.active ?? foundUser?.active,
-          role: updateUserDTO.role ?? foundUser?.role,
-          updatedAt: new Date().toISOString(),
-        }));
-      }, 1000);
-    });
+    const foundUser = await User.findById(updateUserDTO.id);
+
+    if (!foundUser) {
+      throw new CustomError(`User with id: ${updateUserDTO.id}, not found !`, 404);
+    }
+
+    try {
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: updateUserDTO.id },
+        { ...updateUserDTO },
+        { new: true }
+      );
+
+      return UserEntity.fromObject({
+        id: updatedUser?._id,
+        firstName: updatedUser?.firstName,
+        lastName: updatedUser?.lastName,
+        email: updatedUser?.email,
+        role: updatedUser?.role,
+        active: updatedUser?.active,
+        imageURL: updatedUser?.imageURL,
+        createdAt: updatedUser?.createdAt,
+        updatedAt: updatedUser?.updatedAt,
+      });
+
+    } catch (error) {
+      console.log(error);
+      throw new CustomError("Unexpected error, check logs for details !", 500);
+    }
   }
 
-  delete(id: string): Promise<UserEntity> {
-    const foundUser = data.find(item => item.id === id);
-    const user = UserEntity.fromObject(foundUser!);
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(user), 1000);
-    });
+  async delete(id: string): Promise<UserEntity> {
+
+    if (!isValidObjectId(id)) {
+      throw new CustomError(`Invalid id: ${id} !`, 400);
+    }
+
+    const userExists = await User.findById(id);
+
+    if (!userExists) {
+      throw new CustomError(`User with id: ${id}, not found !`, 400);
+    }
+
+    try {
+      const deletedUser = await User.findByIdAndDelete(id);
+      return UserEntity.fromObject(deletedUser!);
+    } catch (error) {
+      console.log(error);
+      throw new CustomError("Unexpected error, check logs for details !", 500);
+    }
   }
 
 }

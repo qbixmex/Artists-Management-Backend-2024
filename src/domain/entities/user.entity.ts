@@ -1,10 +1,12 @@
 import { isDate } from "util/types";
 
 export enum Role {
-  MANAGER  = 'manager',
-  BOOKER   = 'booker',
-  PROMOTER = 'promoter',
-  ARTIST   = 'artist',
+  ADMIN      = 'admin',
+  MANAGER    = 'manager',
+  BOOKER     = 'booker',
+  PROMOTER   = 'promoter',
+  ARTIST     = 'artist',
+  SUBSCRIBER = 'subscriber',
 }
 
 class UserEntity {
@@ -15,6 +17,7 @@ class UserEntity {
     public readonly email: string,
     public readonly role: Role,
     public readonly active: Date | boolean,
+    public readonly imageURL: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
@@ -44,6 +47,10 @@ class UserEntity {
       throw 'Role is Required !';
     }
 
+    if (!entity.imageURL) {
+      throw 'Image URL is Required !';
+    }
+
     return new UserEntity(
       entity.id,
       entity.firstName,
@@ -51,6 +58,7 @@ class UserEntity {
       entity.email,
       entity.role,
       entity.active ? entity.active as Date : false,
+      entity.imageURL,
       entity.createdAt,
       entity.updatedAt,
     );

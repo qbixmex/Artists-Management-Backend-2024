@@ -1,6 +1,6 @@
 {
   "name": "artists-management-backend",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "This app is an artists management application backend with Node / ExpressJS, Typescript, MongoDB.",
   "main": "app.js",
   "scripts": {
@@ -26,6 +26,7 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "env-var": "^7.4.1",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mongoose": "^8.3.3"
   }
 }
