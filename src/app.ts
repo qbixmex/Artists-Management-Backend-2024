@@ -1,7 +1,7 @@
-import { envs } from "./config/plugins/envs.plugin";
-import AppRouter from './presentation/router';
-import Server from "./presentation/server";
-import { MongoDatabase } from "./data";
+import { envs } from './config/plugins/envs.plugin';
+import Server from './server';
+import AppRouter from './router';
+import { MongoDatabase } from './data';
 
 (() => main())();
 
