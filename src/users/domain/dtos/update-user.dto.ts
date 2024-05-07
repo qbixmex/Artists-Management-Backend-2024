@@ -47,7 +47,7 @@ class UpdateUserDTO {
 
     if (!isValidUUID(id)) {
       return [
-        `Todo id: ${id}, is not valid id !`,
+        `User id: ${id}, is not valid id !`,
         undefined
       ];
     }

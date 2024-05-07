@@ -24,8 +24,8 @@ class UserRepositoryImplementation implements UserRepository {
     return this.dataSource.getByEmail(email);
   }
 
-  update(updateTodoDTO: UpdateUserDTO): Promise<UserEntity> {
-    return this.dataSource.update(updateTodoDTO);
+  update(updateUserDTO: UpdateUserDTO): Promise<UserEntity> {
+    return this.dataSource.update(updateUserDTO);
   }
 
   delete(id: string): Promise<UserEntity> {

@@ -52,3 +52,18 @@ export const isPasswordSecure = (password: string) => {
 
   return false;
 }
+
+/**
+ * Convert the given string to slug.
+ * 
+ * @param text text to be converted to slug.
+ * @example ```ts
+ * createSlug('DJ Galaxy'); // dj-Galaxy
+ * // or
+ * createSlug('SOME TEXT'); // some-text
+ * ```
+ * @returns 
+ */
+export const createSlug = (text: string): string => {
+  return text.replace(/\s/g, '-').toLowerCase();
+}

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { UserRoutes } from './users/application';
+import { ArtistsRoutes } from './artists/application';
 
 class AppRouter {
   
@@ -8,6 +9,7 @@ class AppRouter {
     const router = Router();
 
     router.use('/api/v1/users', UserRoutes.routes);
+    router.use('/api/v1/artists', ArtistsRoutes.routes);
 
     return router;
 

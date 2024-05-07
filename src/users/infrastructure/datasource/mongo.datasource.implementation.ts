@@ -2,7 +2,7 @@ import { encryptAdapter } from '../../../adapters';
 import { UserDataSource } from '../../domain/data-source';
 import { CreateUserDTO, UpdateUserDTO } from '../../domain/dtos';
 import { UserEntity } from '../../domain/entities';
-import { CustomError } from '../../domain/errors';
+import { CustomError } from '../../../common/errors';
 import { isValidUUID } from '../../../helpers';
 import { User } from '../../application';
 import { GetAllResponse, QueryParams } from '../../types';
@@ -156,10 +156,6 @@ class MongoDataSourceImplementation implements UserDataSource {
   }
 
   async delete(id: string): Promise<UserEntity> {
-
-    if (!isValidUUID(id)) {
-      throw new CustomError(`Invalid id: ${id} !`, 400);
-    }
 
     const userExists = await User.findOne({ uuid: id });
 

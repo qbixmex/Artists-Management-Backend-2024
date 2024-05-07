@@ -1,38 +1,41 @@
 import crypto from 'node:crypto';
 import { Request, Response } from 'express';
-import { UserRepository } from '../domain/repositories';
+import { ArtistRepository } from '../domain/repositories';
 import {
-  GetUsersUseCase,
-  GetUserByIdUseCase,
-  GetUserByEmailUseCase,
-  CreateUserUseCase,
-  UpdateUserUseCase,
-  DeleteUserUseCase,
+  GetArtistsUseCase,
+  GetArtistByIdUseCase,
+  CreateArtistUseCase,
+  UpdateArtistUseCase,
+  DeleteArtistUseCase,
 } from '../domain';
-import { CreateUserDTO, UpdateUserDTO } from '../domain/dtos';
+import { CreateArtistDTO, UpdateArtistDTO , DeleteArtistDTO } from '../domain/dtos';
 import { CustomError } from '../../common/errors';
-import { QueryParams, RequestCreate, RequestUpdate } from '../types';
+import { QueryParams, RequestBodyCreate } from '../types';
 
-class UserController {
+class ArtistController {
 
   constructor(
-    private readonly usersRepository: UserRepository,
+    private readonly artistRepository: ArtistRepository,
   ) {}
 
   public getAll = async (
-    request: Request<never, never, never, QueryParams>,
-    response: Response
-  ) => {
+    request: Request<never, never, never, {
+      order: string;
+      orderBy: string;
+      limit: string;
+      page: string;
+    }>,
+    response: Response) => {
     const {
       order = 'asc',
-      orderBy = 'firstName',
+      orderBy = 'artistName',
       limit = 10,
       page = 1,
-    } = request.query;
+    } = request.query as unknown as QueryParams;
 
     try {
 
-      const { total, users } = await new GetUsersUseCase(this.usersRepository)
+      const { total, artists } = await new GetArtistsUseCase(this.artistRepository)
         .execute({
           order,
           orderBy,
@@ -48,7 +51,7 @@ class UserController {
           previous: (+page - 1 !== 0) ? `page=${(+page - 1)}` : null,
           page: +page,
         },
-        users
+        artists,
       });
 
     } catch (error) {
@@ -56,10 +59,9 @@ class UserController {
         return response.status(error.statusCode).json({ error: error.message });
       }
     }
-
   }
 
-  public getUserById = async (
+  public getArtistById = async (
     request: Request<{ id: string }>,
     response: Response
   ) => {
@@ -68,7 +70,7 @@ class UserController {
         throw new CustomError("Missing ID parameter !", 400);
       }
 
-      const user = await new GetUserByIdUseCase(this.usersRepository)
+      const user = await new GetArtistByIdUseCase(this.artistRepository)
         .execute(request.params.id);
       
       return response.status(200).json(user);
@@ -79,34 +81,20 @@ class UserController {
     }
   }
 
-  public getUserByEmail = async (
-    request: Request<{ email: string }>,
-    response: Response
-  ) => {
-    try {
-      if (!request.params.email) {
-        throw new CustomError("Missing email parameter !", 400);
-      }
-
-      const user = await new GetUserByEmailUseCase(this.usersRepository)
-        .execute(request.params.email);
-      
-      return response.status(200).json(user);
-    } catch (error) {
-      if (error instanceof CustomError) {
-        return response.status(error.statusCode).json({ error: error.message })
-      }
-    }
-  }
-
   public create = async (
-    request: Request<never, never, RequestCreate>,
+    request: Request<never, never, RequestBodyCreate>,
     response: Response
   ) => {
+    const { fullName, artistName, artistPhoto } = request.body;
 
-    const [ error, createUserDTO ] = CreateUserDTO.create({
+    const [ error, createArtistDTO ] = CreateArtistDTO.create({
       uuid: crypto.randomUUID(),
-      ...request.body,
+      fullName: {
+        value: fullName,
+        visible: false,
+      },
+      artistName: artistName,
+      artistPhoto: artistPhoto,
     });
 
     if (error) {
@@ -115,12 +103,12 @@ class UserController {
 
     try {
 
-      const user = await new CreateUserUseCase(this.usersRepository)
-        .execute(createUserDTO!);
+      const artist = await new CreateArtistUseCase(this.artistRepository)
+        .execute(createArtistDTO!);
 
       return response.status(201).json({
-        message: "User created successfully 👍",
-        user,
+        message: "Artist created successfully 👍",
+        artist,
       });
 
     } catch (error) {
@@ -138,13 +126,10 @@ class UserController {
     }
   }
 
-  public update = async (
-    request: Request<{ id: string }, never, RequestUpdate>,
-    response: Response
-  ) => {
-    const [ error, updateUserDTO ] = UpdateUserDTO.update({
+  public update = async (request: Request, response: Response) => {
+    const [ error, updateArtistDTO ] = UpdateArtistDTO.update({
       id: request.params.id,
-      ...request.body,
+      ...request.body
     });
 
     if (error) {
@@ -153,10 +138,13 @@ class UserController {
 
     try {
 
-      const user = await new UpdateUserUseCase(this.usersRepository)
-        .execute(updateUserDTO!);
+      const artist = await new UpdateArtistUseCase(this.artistRepository)
+        .execute(updateArtistDTO!);
 
-      return response.status(200).json(user)
+      return response.status(200).json({
+        message: "Artist updated successfully",
+        artist
+      });
 
     } catch (error) {
 
@@ -177,14 +165,25 @@ class UserController {
     request: Request<{ id: string }>,
     response: Response
   ) => {
+
+    const [ error, deleteArtistDTO ] = DeleteArtistDTO.run(request.params.id);
+
+    if (error) {
+      return response.status(400).json({ error });
+    }
+
     try {
 
-      const user = await new DeleteUserUseCase(this.usersRepository)
-        .execute(request.params.id);
+      const artist = await new DeleteArtistUseCase(this.artistRepository)
+        .execute(deleteArtistDTO!);
 
       return response.status(200).json({
         message: "User deleted successfully 👍",
-        user
+        artist: {
+          id: artist.id,
+          fullName: artist.fullName.value,
+          artistName: artist.artistName,
+        }
       });
 
     } catch (error) {
@@ -203,4 +202,4 @@ class UserController {
   }
 }
 
-export default UserController;
+export default ArtistController;
